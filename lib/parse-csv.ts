@@ -14,8 +14,8 @@ export interface RawRow {
 }
 
 export interface WeekData {
-  weekKey: string; // e.g. "2025-W03"
-  weekLabel: string; // e.g. "Jan 13"
+  weekKey: string;
+  weekLabel: string;
   rows: RawRow[];
   avgRecovery: number;
   avgExecution: number;
@@ -25,25 +25,64 @@ export interface WeekData {
   frictionCounts: Record<string, number>;
 }
 
-const COLUMN_MAP: Record<string, keyof RawRow> = {
-  timestamp: "timestamp",
-  role: "role",
-  date: "date",
-  "how recovered do you feel starting this week? (energy & recovery)": "recovery",
-  "how hard did routine tasks feel this week? (execution cost) 1= hard, 5 - easy": "execution",
-  "how did your workload feel this week? (workload perception)": "workload",
-  "what created the most friction for you this week? (primary friction source)": "friction",
-  "did you feel like you made meaningful progress this week? (meaningful progress)": "progress",
-  "looking at the next week, how do you expect to cope? (forward capacity - predictive)": "forward",
-  "anything we should know? (optional context)": "notes",
-};
+// Each entry: [keyword to search for in the header, mapped field name]
+// We match by checking if the lowercased header INCLUDES the keyword.
+// Order matters — first match wins, so more specific keywords come first.
+const COLUMN_KEYWORDS: Array<[string, keyof RawRow]> = [
+  ["timestamp", "timestamp"],
+  ["role", "role"],
+  ["date", "date"],
+  ["energy", "recovery"],
+  ["recovered", "recovery"],
+  ["recovery", "recovery"],
+  ["execution cost", "execution"],
+  ["routine tasks", "execution"],
+  ["workload", "workload"],
+  ["friction", "friction"],
+  ["meaningful progress", "progress"],
+  ["forward capacity", "forward"],
+  ["expect to cope", "forward"],
+  ["optional context", "notes"],
+  ["anything we should know", "notes"],
+];
 
-function normalizeRow(raw: Record<string, string>): RawRow {
+function buildColumnMap(headers: string[]): Record<string, keyof RawRow> {
+  const map: Record<string, keyof RawRow> = {};
+  const used = new Set<string>();
+
+  for (const header of headers) {
+    const lower = header.trim().toLowerCase();
+
+    for (const [keyword, field] of COLUMN_KEYWORDS) {
+      if (lower.includes(keyword) && !used.has(field)) {
+        map[header] = field;
+        used.add(field);
+        break;
+      }
+    }
+  }
+
+  // Fallback: map by column position if we got nothing from keywords
+  // Expected order: Timestamp, Role, Date, Recovery, Execution, Workload, Friction, Progress, Forward, Notes
+  if (used.size === 0 && headers.length >= 10) {
+    const positional: Array<keyof RawRow> = [
+      "timestamp", "role", "date", "recovery", "execution",
+      "workload", "friction", "progress", "forward", "notes",
+    ];
+    for (let i = 0; i < Math.min(headers.length, positional.length); i++) {
+      map[headers[i]] = positional[i];
+    }
+  }
+
+  console.log("[parse-csv] Headers found:", headers);
+  console.log("[parse-csv] Column mapping:", map);
+  return map;
+}
+
+function normalizeRow(raw: Record<string, string>, colMap: Record<string, keyof RawRow>): RawRow {
   const row: Partial<RawRow> = {};
-  const keys = Object.keys(raw);
-  for (const key of keys) {
-    const normalized = key.trim().toLowerCase();
-    const mapped = COLUMN_MAP[normalized];
+  for (const key of Object.keys(raw)) {
+    const mapped = colMap[key];
     if (mapped) {
       const value = raw[key]?.trim() ?? "";
       if (mapped === "recovery" || mapped === "execution" || mapped === "progress") {
@@ -57,7 +96,6 @@ function normalizeRow(raw: Record<string, string>): RawRow {
 }
 
 function getISOWeekKey(dateStr: string): string {
-  // Parse date string - could be "1/13/2025", "2025-01-13", "01/13/2025", etc.
   let d: Date;
   if (dateStr.includes("/")) {
     const parts = dateStr.split("/");
@@ -76,10 +114,8 @@ function getISOWeekKey(dateStr: string): string {
 
   if (isNaN(d.getTime())) return "unknown";
 
-  // ISO week: Monday start
   const tmp = new Date(d.getTime());
   tmp.setHours(0, 0, 0, 0);
-  // Set to nearest Thursday (ISO week date algorithm)
   tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
   const yearStart = new Date(tmp.getFullYear(), 0, 1);
   const weekNum = Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
@@ -105,7 +141,6 @@ function getWeekLabel(dateStr: string): string {
 
   if (isNaN(d.getTime())) return "Unknown";
 
-  // Find Monday of this ISO week
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(d);
@@ -208,16 +243,44 @@ export function getRoles(rows: RawRow[]): string[] {
 }
 
 export async function fetchAndParseCSV(url: string): Promise<RawRow[]> {
+  console.log("[parse-csv] Fetching CSV from:", url);
+
   const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+  }
+
   const text = await response.text();
+  console.log("[parse-csv] Response length:", text.length);
+  console.log("[parse-csv] First 500 chars:", text.substring(0, 500));
+
+  // Check if we got HTML instead of CSV
+  if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+    throw new Error(
+      "Received HTML instead of CSV. Make sure the Google Sheet URL ends with ?output=csv (not pubhtml). " +
+      "Go to your Google Sheet → File → Share → Publish to web → select CSV format."
+    );
+  }
 
   return new Promise((resolve, reject) => {
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const rows = (results.data as Record<string, string>[]).map(normalizeRow);
-        resolve(rows.filter((r) => r.date || r.timestamp));
+        const headers = results.meta.fields || [];
+        console.log("[parse-csv] Parsed", results.data.length, "rows with headers:", headers);
+
+        const colMap = buildColumnMap(headers);
+        const rows = (results.data as Record<string, string>[]).map((r) => normalizeRow(r, colMap));
+        const validRows = rows.filter((r) => r.date || r.timestamp);
+
+        console.log("[parse-csv] Valid rows:", validRows.length);
+        if (validRows.length > 0) {
+          console.log("[parse-csv] First row sample:", validRows[0]);
+        }
+
+        resolve(validRows);
       },
       error: (error: Error) => {
         reject(error);

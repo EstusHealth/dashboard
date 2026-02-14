@@ -74,11 +74,29 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="bg-card rounded-xl p-8 border border-border max-w-md text-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card rounded-xl p-8 border border-border max-w-lg text-center">
           <div className="text-red-400 text-4xl mb-4">!</div>
           <h2 className="text-lg font-semibold mb-2">Unable to Load Data</h2>
-          <p className="text-muted text-sm">{error}</p>
+          <p className="text-muted text-sm mb-4">{error}</p>
+          <p className="text-muted text-xs">Check the browser console (F12) for more details.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (weeks.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card rounded-xl p-8 border border-border max-w-lg text-center">
+          <div className="text-yellow-400 text-4xl mb-4">?</div>
+          <h2 className="text-lg font-semibold mb-2">No Data Found</h2>
+          <p className="text-muted text-sm mb-2">
+            CSV loaded ({rows.length} rows) but no valid week data was produced.
+          </p>
+          <p className="text-muted text-xs">
+            Open browser console (F12) and look for [parse-csv] logs to see column mapping.
+          </p>
         </div>
       </div>
     );
