@@ -242,13 +242,23 @@ export function getRoles(rows: RawRow[]): string[] {
   return Array.from(roles).sort();
 }
 
-export async function fetchAndParseCSV(url: string): Promise<RawRow[]> {
-  console.log("[parse-csv] Fetching CSV from:", url);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function fetchAndParseCSV(sheetUrl: string): Promise<RawRow[]> {
+  // Use server-side API proxy to avoid CORS issues and auto-normalize the URL
+  const proxyUrl = "/api/csv";
+  console.log("[parse-csv] Fetching CSV via server proxy:", proxyUrl);
 
-  const response = await fetch(url);
+  const response = await fetch(proxyUrl);
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const body = await response.json();
+      if (body.error) detail = body.error;
+    } catch {
+      // not JSON
+    }
+    throw new Error(`Failed to fetch CSV: ${detail}`);
   }
 
   const text = await response.text();
