@@ -13,7 +13,6 @@ import TrendChart from "@/components/TrendChart";
 import WorkloadBar from "@/components/WorkloadBar";
 import ForwardDonut from "@/components/ForwardDonut";
 import FrictionBreakdown from "@/components/FrictionBreakdown";
-import NotesTimeline from "@/components/NotesTimeline";
 
 type MetricKey = "avgRecovery" | "avgExecution" | "avgProgress";
 
@@ -203,11 +202,10 @@ export default function Dashboard() {
           <WorkloadBar weeks={weeks} />
         </div>
 
-        {/* Bottom Row: Forward Donut + Friction + Notes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Bottom Row: Forward Donut + Friction */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ForwardDonut weeks={weeks} />
           <FrictionBreakdown frictionCounts={frictionCounts} />
-          <NotesTimeline rows={filteredRows} />
         </div>
       </main>
 
