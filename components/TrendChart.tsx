@@ -69,30 +69,30 @@ export default function TrendChart({ weeks, activeMetric, onMetricChange }: Tren
                 <stop offset="95%" stopColor={config.color} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
               dataKey="week"
-              tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "'Space Mono', monospace" }}
-              axisLine={{ stroke: "#2a2a3e" }}
+              tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "'Space Mono', monospace" }}
+              axisLine={{ stroke: "var(--border)" }}
               tickLine={false}
             />
             <YAxis
               domain={[1, 5]}
               ticks={[1, 2, 3, 4, 5]}
-              tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "'Space Mono', monospace" }}
-              axisLine={{ stroke: "#2a2a3e" }}
+              tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "'Space Mono', monospace" }}
+              axisLine={{ stroke: "var(--border)" }}
               tickLine={false}
             />
             <Tooltip
               contentStyle={{
-                background: "#1e1e32",
-                border: "1px solid #2a2a3e",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
-                color: "#e2e8f0",
+                color: "var(--foreground)",
                 fontFamily: "'Space Mono', monospace",
                 fontSize: "12px",
               }}
-              labelStyle={{ color: "#94a3b8" }}
+              labelStyle={{ color: "var(--muted)" }}
             />
             <Area
               type="monotone"
@@ -101,7 +101,7 @@ export default function TrendChart({ weeks, activeMetric, onMetricChange }: Tren
               strokeWidth={2}
               fill="url(#areaGradient)"
               dot={{ fill: config.color, strokeWidth: 0, r: 4 }}
-              activeDot={{ r: 6, stroke: config.color, strokeWidth: 2, fill: "#1e1e32" }}
+              activeDot={{ r: 6, stroke: config.color, strokeWidth: 2, fill: "var(--card)" }}
             >
               <LabelList
                 dataKey="value"

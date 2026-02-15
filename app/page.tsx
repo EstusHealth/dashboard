@@ -13,6 +13,7 @@ import TrendChart from "@/components/TrendChart";
 import WorkloadBar from "@/components/WorkloadBar";
 import ForwardDonut from "@/components/ForwardDonut";
 import FrictionBreakdown from "@/components/FrictionBreakdown";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type MetricKey = "avgRecovery" | "avgExecution" | "avgProgress";
 
@@ -59,47 +60,6 @@ export default function Dashboard() {
   const latestWeekResponses = latestWeek?.rows.length ?? 0;
 
   const currentWeekLabel = latestWeek?.weekLabel ?? "";
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-muted text-sm">Loading team pulse data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-card rounded-xl p-8 border border-border max-w-lg text-center">
-          <div className="text-red-400 text-4xl mb-4">!</div>
-          <h2 className="text-lg font-semibold mb-2">Unable to Load Data</h2>
-          <p className="text-muted text-sm mb-4">{error}</p>
-          <p className="text-muted text-xs">Check the browser console (F12) for more details.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (weeks.length === 0) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-card rounded-xl p-8 border border-border max-w-lg text-center">
-          <div className="text-yellow-400 text-4xl mb-4">?</div>
-          <h2 className="text-lg font-semibold mb-2">No Data Found</h2>
-          <p className="text-muted text-sm mb-2">
-            CSV loaded ({rows.length} rows) but no valid week data was produced.
-          </p>
-          <p className="text-muted text-xs">
-            Open browser console (F12) and look for [parse-csv] logs to see column mapping.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,12 +115,44 @@ export default function Dashboard() {
                 </span>
                 <span className="font-mono">{currentWeekLabel}</span>
               </div>
+
+              <div className="border-l border-border h-6 mx-1 hidden sm:block" />
+
+              <ThemeToggle />
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      {(loading || error || weeks.length === 0) ? (
+        <div className="flex items-center justify-center p-12">
+          {loading ? (
+            <div className="text-center">
+              <div className="inline-block w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-muted text-sm">Loading team pulse data...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-card rounded-xl p-8 border border-border max-w-lg text-center">
+              <div className="text-red-400 text-4xl mb-4">!</div>
+              <h2 className="text-lg font-semibold mb-2">Unable to Load Data</h2>
+              <p className="text-muted text-sm mb-4">{error}</p>
+              <p className="text-muted text-xs">Check the browser console (F12) for more details.</p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl p-8 border border-border max-w-lg text-center">
+              <div className="text-yellow-400 text-4xl mb-4">?</div>
+              <h2 className="text-lg font-semibold mb-2">No Data Found</h2>
+              <p className="text-muted text-sm mb-2">
+                CSV loaded ({rows.length} rows) but no valid week data was produced.
+              </p>
+              <p className="text-muted text-xs">
+                Open browser console (F12) and look for [parse-csv] logs to see column mapping.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Top Row: Metric Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MetricCard
@@ -208,6 +200,7 @@ export default function Dashboard() {
           <FrictionBreakdown frictionCounts={frictionCounts} />
         </div>
       </main>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border mt-8">
