@@ -54,10 +54,10 @@ export default function ForwardDonut({ weeks }: ForwardDonutProps) {
             </Pie>
             <Tooltip
               contentStyle={{
-                background: "#1e1e32",
-                border: "1px solid #2a2a3e",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
-                color: "#e2e8f0",
+                color: "var(--foreground)",
                 fontFamily: "'Space Mono', monospace",
                 fontSize: "12px",
               }}

@@ -46,7 +46,7 @@ export default function WorkloadBar({ weeks }: WorkloadBarProps) {
                       style={{
                         width: `${pct}%`,
                         backgroundColor: WORKLOAD_COLORS[category] || "#666",
-                        color: category === "About right" || category === "Light" ? "#12121e" : "#fff",
+                        color: category === "About right" || category === "Light" ? "#0f172a" : "#fff",
                         minWidth: pct > 0 ? "20px" : "0",
                       }}
                       title={`${category}: ${count}`}

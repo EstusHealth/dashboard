@@ -3,8 +3,21 @@
 @tailwind utilities;
 
 :root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --accent: #3b82f6;
+}
+
+.dark {
   --background: #12121e;
   --foreground: #e2e8f0;
+  --card: #1e1e32;
+  --border: #2a2a3e;
+  --muted: #94a3b8;
+  --accent: #60a5fa;
 }
 
 body {
@@ -79,21 +92,21 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #12121e;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a3e;
+  background: var(--border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a5e;
+  background: var(--muted);
 }
 
 /* Recharts tooltip */
 .recharts-default-tooltip {
-  background: #1e1e32 !important;
-  border: 1px solid #2a2a3e !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
 }
